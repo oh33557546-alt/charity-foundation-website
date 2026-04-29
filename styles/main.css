@@ -67,6 +67,12 @@ body {
     text-decoration: none;
 }
 
+.logo-img {
+    width: 35px;
+    height: 35px;
+    object-fit: contain;
+} 
+
 .logo i {
     font-size: 2rem;
 }
