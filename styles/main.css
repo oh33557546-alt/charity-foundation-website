@@ -68,8 +68,12 @@ body {
 }
 
 .logo-img {
-    width: 40px !important;
-    height: 40px !important;
+    width: 30px !important;
+    height: 30px !important;
+    max-width: 30px;
+    max-height: 30px;
+    object-fit: contain;
+    display: block;
 } 
 
 .logo i {
