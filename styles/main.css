@@ -195,11 +195,11 @@ body {
     z-index: 1;
 }
 
-.hero-video iframe {
+.hero-video video {
     width: 100%;
     height: 100%;
     object-fit: cover;
-}
+} 
 
 .hero-overlay {
     position: absolute;
