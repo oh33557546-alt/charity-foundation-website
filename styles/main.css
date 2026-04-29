@@ -60,7 +60,7 @@ body {
 .logo {
     display: flex;
     align-items: center;
-    gap: 30px;
+    gap: 80px;
     color: var(--accent-gold);
     font-size: 1.8rem;
     font-weight: bold;
@@ -68,10 +68,10 @@ body {
 }
 
 .logo-img {
-    width: 30px !important;
-    height: 30px !important;
-    max-width: 30px;
-    max-height: 30px;
+    width: 80px !important;
+    height: 80px !important;
+    max-width: 80px;
+    max-height: 80px;
     object-fit: contain;
     display: block;
 } 
@@ -136,7 +136,7 @@ body {
 
 .language-switcher {
     display: flex;
-    gap: 10px;
+    gap: 5px;
     margin-left: 2rem;
 }
 
@@ -145,7 +145,7 @@ body {
     border: 2px solid var(--white);
     color: var(--white);
     padding: 0.4rem 0.8rem;
-    border-radius: 50px;
+    border-radius: 20px;
     cursor: pointer;
     font-size: 0.9rem;
     font-weight: 600;
