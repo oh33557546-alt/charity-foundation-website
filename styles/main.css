@@ -3,17 +3,17 @@
    ================================ */
 
 :root {
-    --primary-navy: #1a2d5c;
-    --secondary-navy: #0f1b35;
-    --accent-gold: #C5A059;
-    --light-gold: #e8d9c7;
+    --primary-navy: #0F5132;      /* أخضر غامق (أساسي) */
+    --secondary-navy: #0B3D2E;    /* أخضر أغمق للهيدر */
+    --accent-gold: #D4AF37;       /* ذهبي فاخر */
+    --light-gold: #F5E6C8;        /* ذهبي فاتح */
     --white: #ffffff;
-    --light-gray: #f5f5f5;
-    --dark-gray: #333333;
-    --border-color: #e0e0e0;
-    --success-color: #4caf50;
-    --error-color: #f44336;
-}
+    --light-gray: #f6f9f7;        /* خلفية خفيفة مائلة للأخضر */
+    --dark-gray: #1a1a1a;
+    --border-color: #dfe7e2;
+    --success-color: #2e7d32;
+    --error-color: #c62828;
+} 
 
 * {
     margin: 0;
