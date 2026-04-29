@@ -68,8 +68,9 @@ body {
 }
 
 .logo-img {
-    width: 50px !important;
-    height: 50px !important;
+    width: 60px !important;
+    height: 60px !important;
+    object-fit: contain;
 } 
 
 .logo i {
@@ -123,7 +124,7 @@ body {
     color: var(--primary-navy) !important;
     padding: 0.7rem 1.5rem;
     border-radius: 50px;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .portal-btn::after {
@@ -144,7 +145,7 @@ body {
     border-radius: 20px;
     cursor: pointer;
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 400;
     transition: all 0.3s ease;
 }
 
