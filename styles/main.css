@@ -60,7 +60,7 @@ body {
 .logo {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 30px;
     color: var(--accent-gold);
     font-size: 1.8rem;
     font-weight: bold;
