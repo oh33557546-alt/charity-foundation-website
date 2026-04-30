@@ -82,11 +82,11 @@ body {
     font-size: 1.5rem;
 }
 
-.menu-actions {
+.nav-menu {
     display: flex;
-    flex-direction: column;
+    list-style: none;
+    gap: 2rem;
     align-items: center;
-    gap: 12px; /* المسافة بينهم */
 } 
 
 .nav-link {
