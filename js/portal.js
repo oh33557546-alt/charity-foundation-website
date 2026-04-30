@@ -291,7 +291,7 @@ function setupFormListeners() {
     var submitBtn = document.getElementById('submitBtn');
     if (!submitBtn) return;
 
-    submitBtn.addEventListener('click', function() {
+    submitBtn.addEventListener('click', async function() {
         if (!validateStep(5)) return;
 
         saveStepData(5);
@@ -299,6 +299,20 @@ function setupFormListeners() {
         var txNumber = 'WA-' + new Date().getFullYear() + '-' +
             String(Math.floor(Math.random() * 10000)).padStart(4, '0');
 
+        // أولاً احفظ في Supabase
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+
+        await saveToSupabase(txNumber);
+
+        // ثم أظهر النجاح
+        document.getElementById('transactionNumber').textContent = txNumber;
+        document.getElementById('successModal').classList.add('active');
+
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> تقديم الطلب';
+
+        // فتح واتس آب
         var msg = encodeURIComponent(
             'مرحباً، لقد قمت بتقديم طلب منحة.\nرقم المعاملة: ' + txNumber +
             '\nالاسم: ' + (formData.personalInfo.fullName || '') +
@@ -307,22 +321,17 @@ function setupFormListeners() {
             '\nالمبلغ: ' + (formData.grantDetails.grantAmount || '') + ' ريال'
         );
         window.open('https://wa.me/966545239928?text=' + msg, '_blank');
-
-        document.getElementById('transactionNumber').textContent = txNumber;
-        document.getElementById('successModal').classList.add('active');
-
-        saveToSupabase(txNumber);
-
-        setTimeout(function() {
-            document.getElementById('grantForm').reset();
-            formData.attachments = {};
-            ['idCardFront', 'idCardBack'].forEach(function(id) { removeFile(id); });
-            document.getElementById('successModal').classList.remove('active');
-            currentStep = 1;
-            updateProgressBar();
-            showStep(1);
-        }, 4000);
     });
+}
+
+function redirectToWhatsApp() {
+    document.getElementById('successModal').classList.remove('active');
+    document.getElementById('grantForm').reset();
+    formData.attachments = {};
+    ['idCardFront', 'idCardBack'].forEach(function(id) { removeFile(id); });
+    currentStep = 1;
+    updateProgressBar();
+    showStep(1);
 }
 
 // ================================
