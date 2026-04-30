@@ -805,34 +805,14 @@ h2 {
         width: 100%;
         flex-direction: column;
         background-color: var(--primary-navy);
-        gap: 15px; /* ← تم التعديل هنا */
+        gap: 15px ;
         display: none;
         padding: 1rem 0;
     }
 
     .nav-menu.active {
         display: flex;
-    }
-
-    .nav-menu li {
-        width: 100%;
-        text-align: center;
-    }
-
-    .portal-btn {
-        display: inline-block;
-        margin: 10px 0;
-    }
-
-    .lang-item {
-        margin-top: 10px;
-    }
-
-    .language-switcher {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-    }
+    } 
 
     .nav-link {
         padding: 1rem;
