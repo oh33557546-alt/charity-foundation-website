@@ -214,13 +214,13 @@ function setupFileUpload() {
     const fileInputs = document.querySelectorAll('.file-input');
 
     fileInputs.forEach(input => {
-        const uploadArea = input.nextElementSibling;
-        const preview = uploadArea.nextElementSibling;
+        // الـ input الآن داخل file-upload-area ويغطيها بالكامل عبر CSS
+        // الضغط عليه يفتح مباشرة اختيار الملف - يعمل على الجوال والكمبيوتر
+        const uploadArea = input.parentElement; // .file-upload-area
+        const uploadContainer = uploadArea.parentElement; // .file-upload
+        const preview = uploadContainer.querySelector('.file-preview');
 
-        // Click to upload
-        uploadArea.addEventListener('click', () => input.click());
-
-        // Drag and drop
+        // Drag and drop (للكمبيوتر فقط)
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             uploadArea.style.backgroundColor = 'rgba(197, 160, 89, 0.2)';
@@ -242,9 +242,9 @@ function setupFileUpload() {
             uploadArea.style.borderColor = '#C5A059';
         });
 
-        // File input change
+        // عند اختيار ملف (يعمل على الجوال والكمبيوتر)
         input.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
+            if (e.target.files && e.target.files.length > 0) {
                 handleFileSelect(e.target.files[0], input, preview);
             }
         });
@@ -283,12 +283,13 @@ function handleFileSelect(file, input, preview) {
 }
 
 function removeFile(button) {
-    const preview = button.parentElement;
-    const uploadArea = preview.previousElementSibling;
-    const fileInput = uploadArea.previousElementSibling;
+    const preview = button.parentElement; // .file-preview
+    const uploadContainer = preview.parentElement; // .file-upload
+    const fileInput = uploadContainer.querySelector('.file-input');
     
     fileInput.value = '';
     preview.classList.remove('active');
+    preview.innerHTML = '';
     delete formData.attachments[fileInput.id];
 }
 
