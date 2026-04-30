@@ -341,20 +341,14 @@ small {
     position: relative;
 }
 
-/* الـ input يغطي المنطقة بالكامل - يعمل على الجوال بشكل مضمون */
+/* إخفاء الـ input الحقيقي - الـ label هو ما يُضغط عليه */
 .file-input {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-    z-index: 10;
-    font-size: 16px; /* يمنع zoom على iOS */
+    display: none;
 }
 
+/* الـ label يعمل كزر الرفع - يعمل على كل الأجهزة بدون JS */
 .file-upload-area {
+    display: block;
     border: 2px dashed var(--accent-gold);
     border-radius: 8px;
     padding: 2rem;
@@ -362,12 +356,13 @@ small {
     cursor: pointer;
     background-color: rgba(197, 160, 89, 0.05);
     transition: all 0.3s ease;
-    position: relative; /* مطلوب مع الـ input absolute */
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(197, 160, 89, 0.2);
 }
 
 .file-upload-area:hover,
-.file-upload:focus-within .file-upload-area {
-    background-color: rgba(197, 160, 89, 0.1);
+.file-upload-area:active {
+    background-color: rgba(197, 160, 89, 0.15);
     border-color: var(--primary-navy);
 }
 
