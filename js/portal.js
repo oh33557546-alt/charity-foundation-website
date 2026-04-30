@@ -2,17 +2,23 @@
    PORTAL JAVASCRIPT - FIXED
    ================================ */
 // 1. ادرج مفاتيح الربط هنا في أول سطر بالملف
-const supabaseUrl = 'https://tdjepjglnyumfdeljhqz.supabase.co'; 
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkamVwamdsbnl1bWZkZWxqaHF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MTgzNzYsImV4cCI6MjA5MzA5NDM3Nn0.OUVLxKKjxylaIBR9tGcCPm6g8N5FaCm0gigpNB_Wq3Q';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const supabaseUrl = 'https://tdjepjglnyumfdeljhqz.supabase.co'; // رابط مشروعكconst supabaseUrl = 'https://xxxxxxx.supabase.co'; // رابط مشروعك
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkamVwamdsbnl1bWZkZWxqaHF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MTgzNzYsImV4cCI6MjA5MzA5NDM3Nn0.OUVLxKKjxylaIBR9tGcCPm6g8N5FaCm0gigpNB_Wq3Q'; // مفتاح الـ anon
+// تأكد من وجود كلمة createClient بشكل صحيح
+const { createClient } = supabase; 
+const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-// ثم يكمل الكود القديم عمله بشكل طبيعي...
 let currentLanguage = 'ar';
 let currentStep = 1;
 
 const formData = {
     personalInfo: {},
-    // ... بقية الكود
+    contactCareer: {},
+    grantDetails: {},
+    bankingInfo: {},
+    attachments: {}
+};
+
 
 
 let currentLanguage = 'ar';
