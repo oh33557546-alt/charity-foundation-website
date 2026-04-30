@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم المدير — مؤسسة الوليد للإنسانية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --navy:       #0F5132;
+            --navy-dark:  #0B3D2E;
+            --navy-deep:  #072A1E;
+            --gold:       #D4AF37;
+            --gold-light: #F5E6C8;
+            --gold-dim:   #a8892a;
+            --bg:         #f0f4f1;
+            --white:      #ffffff;
+            --sidebar-w:  260px;
+            --pending:    #d97706;
+            --approved:   #16a34a;
+            --rejected:   #dc2626;
+            --text:       #1a1a1a;
+            --muted:      #6b7280;
+            --border:     #d1d5db;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* ── LOGIN ── */
+        #loginScreen {
+            position: fixed; inset: 0;
+            background: linear-gradient(135deg, var(--navy-deep), var(--navy));
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999;
+        }
+        .login-box {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 3rem 2.5rem;
+            width: 380px;
+            box-shadow: 0 30px 80px rgba(0,0,0,.35);
+            text-align: center;
+        }
+        .login-logo {
+            width: 70px; height: 70px;
+            background: linear-gradient(135deg, var(--navy), var(--gold));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.2rem;
+            font-size: 1.8rem; color: var(--white);
+        }
+        .login-box h2 { font-size: 1.4rem; color: var(--navy); margin-bottom: .3rem; }
+        .login-box p  { font-size: .85rem; color: var(--muted); margin-bottom: 2rem; }
+        .login-input {
+            width: 100%; padding: .85rem 1rem;
+            border: 2px solid var(--border); border-radius: 10px;
+            font-family: 'Cairo', sans-serif; font-size: .95rem;
+            margin-bottom: 1rem; outline: none; transition: border .2s;
+            text-align: right;
+        }
+        .login-input:focus { border-color: var(--navy); }
+        .login-btn {
+            width: 100%; padding: .9rem;
+            background: linear-gradient(135deg, var(--navy), var(--gold));
+            color: var(--white); border: none; border-radius: 10px;
+            font-family: 'Cairo', sans-serif; font-size: 1rem; font-weight: 700;
+            cursor: pointer; transition: opacity .2s;
+        }
+        .login-btn:hover { opacity: .9; }
+        .login-error { color: var(--rejected); font-size: .85rem; margin-top: .5rem; display: none; }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: linear-gradient(180deg, var(--navy-deep) 0%, var(--navy-dark) 100%);
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+            position: fixed; top: 0; right: 0; bottom: 0;
+            z-index: 100;
+            box-shadow: -4px 0 20px rgba(0,0,0,.2);
+        }
+        .sidebar-logo {
+            padding: 1.5rem 1.2rem;
+            border-bottom: 1px solid rgba(212,175,55,.2);
+            display: flex; align-items: center; gap: .8rem;
+        }
+        .sidebar-logo-icon {
+            width: 42px; height: 42px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; color: var(--navy-deep); flex-shrink: 0;
+        }
+        .sidebar-logo-text { color: var(--white); }
+        .sidebar-logo-text h3 { font-size: .85rem; font-weight: 700; line-height: 1.3; }
+        .sidebar-logo-text p  { font-size: .7rem; color: var(--gold); opacity: .9; }
+
+        .nav-section { padding: 1.2rem .8rem .5rem; }
+        .nav-section-label {
+            font-size: .65rem; font-weight: 700; letter-spacing: .1em;
+            color: rgba(255,255,255,.35); text-transform: uppercase;
+            padding: 0 .6rem; margin-bottom: .5rem;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: .75rem;
+            padding: .7rem .9rem;
+            border-radius: 10px; color: rgba(255,255,255,.7);
+            cursor: pointer; transition: all .2s;
+            font-size: .9rem; font-weight: 600;
+            margin-bottom: .2rem;
+        }
+        .nav-item:hover { background: rgba(255,255,255,.07); color: var(--white); }
+        .nav-item.active { background: linear-gradient(135deg, rgba(212,175,55,.25), rgba(212,175,55,.1)); color: var(--gold); }
+        .nav-item i { width: 20px; text-align: center; font-size: .95rem; }
+        .nav-badge {
+            margin-right: auto;
+            background: var(--gold); color: var(--navy-deep);
+            font-size: .65rem; font-weight: 900;
+            padding: .1rem .45rem; border-radius: 20px;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 1rem .8rem;
+            border-top: 1px solid rgba(255,255,255,.07);
+        }
+        .logout-btn {
+            display: flex; align-items: center; gap: .75rem;
+            padding: .7rem .9rem;
+            border-radius: 10px; color: rgba(255,100,100,.8);
+            cursor: pointer; transition: all .2s;
+            font-size: .9rem; font-weight: 600;
+        }
+        .logout-btn:hover { background: rgba(220,38,38,.1); color: #f87171; }
+
+        /* ── MAIN ── */
+        .main {
+            margin-right: var(--sidebar-w);
+            flex: 1;
+            display: flex; flex-direction: column;
+        }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            background: var(--white);
+            padding: 1rem 2rem;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 50;
+        }
+        .topbar-title { font-size: 1.2rem; font-weight: 700; color: var(--navy); }
+        .topbar-actions { display: flex; align-items: center; gap: 1rem; }
+        .refresh-btn {
+            padding: .5rem 1.2rem;
+            background: var(--navy); color: var(--white);
+            border: none; border-radius: 8px;
+            font-family: 'Cairo', sans-serif; font-size: .85rem; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; gap: .5rem;
+            transition: background .2s;
+        }
+        .refresh-btn:hover { background: var(--navy-dark); }
+        .topbar-date { font-size: .8rem; color: var(--muted); }
+
+        /* ── CONTENT ── */
+        .content { padding: 2rem; flex: 1; }
+
+        /* ── STATS GRID ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 1.4rem 1.5rem;
+            display: flex; align-items: center; gap: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,.06);
+            border: 1px solid var(--border);
+            transition: transform .2s, box-shadow .2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+        .stat-icon {
+            width: 52px; height: 52px; border-radius: 13px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem; flex-shrink: 0;
+        }
+        .stat-icon.total    { background: rgba(15,81,50,.1);  color: var(--navy); }
+        .stat-icon.pending  { background: rgba(217,119,6,.1); color: var(--pending); }
+        .stat-icon.approved { background: rgba(22,163,74,.1); color: var(--approved); }
+        .stat-icon.rejected { background: rgba(220,38,38,.1); color: var(--rejected); }
+        .stat-info h3 { font-size: 1.8rem; font-weight: 900; line-height: 1; }
+        .stat-info p  { font-size: .8rem; color: var(--muted); margin-top: .2rem; }
+
+        /* ── FILTERS ── */
+        .filters-bar {
+            background: var(--white);
+            border-radius: 14px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,.06);
+            border: 1px solid var(--border);
+        }
+        .search-box {
+            flex: 1; min-width: 220px;
+            display: flex; align-items: center; gap: .6rem;
+            background: var(--bg); border: 1.5px solid var(--border);
+            border-radius: 9px; padding: .55rem 1rem;
+        }
+        .search-box input {
+            border: none; background: none; outline: none;
+            font-family: 'Cairo', sans-serif; font-size: .9rem;
+            flex: 1; text-align: right;
+        }
+        .search-box i { color: var(--muted); }
+        .filter-select {
+            padding: .55rem 1rem;
+            border: 1.5px solid var(--border); border-radius: 9px;
+            font-family: 'Cairo', sans-serif; font-size: .88rem;
+            background: var(--bg); color: var(--text); outline: none;
+            cursor: pointer;
+        }
+        .filter-select:focus { border-color: var(--navy); }
+        .results-count { font-size: .85rem; color: var(--muted); margin-right: auto; }
+
+        /* ── TABLE ── */
+        .table-card {
+            background: var(--white);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,.06);
+            border: 1px solid var(--border);
+        }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead tr { background: linear-gradient(135deg, var(--navy), var(--navy-dark)); }
+        thead th {
+            padding: 1rem 1.2rem; text-align: right;
+            color: var(--white); font-size: .82rem; font-weight: 700;
+            white-space: nowrap;
+        }
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background .15s;
+        }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: rgba(15,81,50,.03); }
+        td {
+            padding: .9rem 1.2rem; font-size: .88rem;
+            color: var(--text); white-space: nowrap;
+        }
+        .tx-id { font-family: monospace; font-weight: 700; color: var(--navy); font-size: .82rem; }
+        .applicant-name { font-weight: 700; }
+        .applicant-phone { color: var(--muted); font-size: .8rem; }
+
+        /* STATUS BADGE */
+        .badge {
+            display: inline-flex; align-items: center; gap: .35rem;
+            padding: .3rem .8rem; border-radius: 20px;
+            font-size: .75rem; font-weight: 700;
+        }
+        .badge.pending  { background: rgba(217,119,6,.12);  color: var(--pending); }
+        .badge.approved { background: rgba(22,163,74,.12);  color: var(--approved); }
+        .badge.rejected { background: rgba(220,38,38,.12);  color: var(--rejected); }
+        .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+        /* ACTION BUTTONS */
+        .actions { display: flex; gap: .5rem; }
+        .btn-icon {
+            width: 32px; height: 32px; border-radius: 8px; border: none;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: .85rem; transition: all .2s;
+        }
+        .btn-view     { background: rgba(15,81,50,.1);  color: var(--navy); }
+        .btn-approve  { background: rgba(22,163,74,.1); color: var(--approved); }
+        .btn-reject   { background: rgba(220,38,38,.1); color: var(--rejected); }
+        .btn-icon:hover { filter: brightness(.85); transform: scale(1.1); }
+
+        /* ── EMPTY / LOADING ── */
+        .table-empty {
+            padding: 4rem 2rem; text-align: center; color: var(--muted);
+        }
+        .table-empty i { font-size: 3rem; opacity: .3; margin-bottom: 1rem; display: block; }
+        .spinner {
+            display: inline-block; width: 36px; height: 36px;
+            border: 3px solid var(--border);
+            border-top-color: var(--navy);
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 500; padding: 1.5rem;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--white);
+            border-radius: 20px;
+            width: 100%; max-width: 700px;
+            max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 30px 80px rgba(0,0,0,.3);
+            animation: slideUp .25s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+        .modal-header {
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, var(--navy), var(--navy-dark));
+            border-radius: 20px 20px 0 0;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .modal-header h3 { color: var(--white); font-size: 1.1rem; font-weight: 700; }
+        .modal-close {
+            background: rgba(255,255,255,.15); border: none; border-radius: 8px;
+            color: var(--white); width: 34px; height: 34px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 1rem; transition: background .2s;
+        }
+        .modal-close:hover { background: rgba(255,255,255,.25); }
+        .modal-body { padding: 2rem; }
+
+        .detail-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+        .detail-item label {
+            display: block; font-size: .75rem; font-weight: 700;
+            color: var(--muted); text-transform: uppercase; letter-spacing: .05em;
+            margin-bottom: .3rem;
+        }
+        .detail-item span {
+            font-size: .95rem; font-weight: 600; color: var(--text);
+            display: block;
+        }
+        .detail-full { grid-column: 1 / -1; }
+        .detail-note {
+            background: var(--bg); border-radius: 10px;
+            padding: 1rem; font-size: .9rem; line-height: 1.7;
+            color: var(--text);
+        }
+
+        .section-divider {
+            font-size: .75rem; font-weight: 700; letter-spacing: .08em;
+            color: var(--navy); text-transform: uppercase;
+            border-bottom: 2px solid var(--gold-light);
+            padding-bottom: .4rem; margin: 1.5rem 0 1rem;
+        }
+
+        .id-images { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+        .id-img-box {
+            border: 2px solid var(--border); border-radius: 12px;
+            overflow: hidden; background: var(--bg);
+            min-height: 120px; display: flex; flex-direction: column;
+        }
+        .id-img-box label {
+            padding: .5rem .8rem; font-size: .75rem; font-weight: 700;
+            background: var(--navy); color: var(--white); text-align: center;
+        }
+        .id-img-box img {
+            width: 100%; height: 160px; object-fit: cover;
+            cursor: pointer; transition: opacity .2s;
+        }
+        .id-img-box img:hover { opacity: .85; }
+        .no-img {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            color: var(--muted); font-size: .8rem; gap: .4rem;
+        }
+
+        .modal-actions {
+            display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;
+        }
+        .action-btn {
+            flex: 1; min-width: 120px;
+            padding: .8rem 1.5rem;
+            border: none; border-radius: 10px;
+            font-family: 'Cairo', sans-serif; font-size: .9rem; font-weight: 700;
+            cursor: pointer; transition: all .2s;
+            display: flex; align-items: center; justify-content: center; gap: .5rem;
+        }
+        .action-btn.approve { background: linear-gradient(135deg, #16a34a, #15803d); color: var(--white); }
+        .action-btn.reject  { background: linear-gradient(135deg, #dc2626, #b91c1c); color: var(--white); }
+        .action-btn.whatsapp { background: linear-gradient(135deg, #25D366, #128C7E); color: var(--white); }
+        .action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,.15); }
+        .action-btn:disabled { opacity: .5; pointer-events: none; }
+
+        /* ── TOAST ── */
+        #toast {
+            position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+            background: var(--navy-deep); color: var(--white);
+            padding: .8rem 1.8rem; border-radius: 30px;
+            font-size: .9rem; font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0,0,0,.3);
+            z-index: 9999; display: none;
+            border-right: 4px solid var(--gold);
+        }
+        #toast.show { display: block; animation: fadeInUp .3s ease; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+        /* ── PAGINATION ── */
+        .pagination {
+            display: flex; align-items: center; justify-content: center;
+            gap: .5rem; padding: 1.2rem;
+            border-top: 1px solid var(--border);
+        }
+        .page-btn {
+            width: 36px; height: 36px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            border: 1.5px solid var(--border); background: var(--white);
+            cursor: pointer; font-family: 'Cairo', sans-serif;
+            font-size: .85rem; font-weight: 600; color: var(--text);
+            transition: all .2s;
+        }
+        .page-btn:hover { border-color: var(--navy); color: var(--navy); }
+        .page-btn.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
+        .page-btn:disabled { opacity: .4; pointer-events: none; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { margin-right: 0; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .detail-grid { grid-template-columns: 1fr; }
+            .id-images { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="loginScreen">
+    <div class="login-box">
+        <div class="login-logo"><i class="fas fa-shield-halved"></i></div>
+        <h2>لوحة تحكم المدير</h2>
+        <p>مؤسسة الوليد للإنسانية</p>
+        <input id="loginUser" type="text" class="login-input" placeholder="اسم المستخدم" autocomplete="off">
+        <input id="loginPass" type="password" class="login-input" placeholder="كلمة المرور">
+        <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> دخول</button>
+        <p class="login-error" id="loginError">اسم المستخدم أو كلمة المرور غير صحيحة</p>
+    </div>
+</div>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="sidebar-logo-icon"><i class="fas fa-hand-holding-heart"></i></div>
+        <div class="sidebar-logo-text">
+            <h3>مؤسسة الوليد</h3>
+            <p>لوحة الإدارة</p>
+        </div>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section-label">القائمة الرئيسية</div>
+        <div class="nav-item active" onclick="showSection('applications')">
+            <i class="fas fa-file-alt"></i> الطلبات
+            <span class="nav-badge" id="pendingBadge">0</span>
+        </div>
+        <div class="nav-item" onclick="showSection('stats')">
+            <i class="fas fa-chart-bar"></i> الإحصائيات
+        </div>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section-label">الموقع</div>
+        <div class="nav-item" onclick="window.open('index.html','_blank')">
+            <i class="fas fa-globe"></i> الصفحة الرئيسية
+        </div>
+        <div class="nav-item" onclick="window.open('portal.html','_blank')">
+            <i class="fas fa-paper-plane"></i> بوابة الطلبات
+        </div>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="logout-btn" onclick="doLogout()">
+            <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+        </div>
+    </div>
+</aside>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="topbar-title" id="topbarTitle">📋 إدارة الطلبات</div>
+        <div class="topbar-actions">
+            <span class="topbar-date" id="topbarDate"></span>
+            <button class="refresh-btn" onclick="loadApplications()">
+                <i class="fas fa-sync-alt"></i> تحديث
+            </button>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- STATS GRID -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon total"><i class="fas fa-inbox"></i></div>
+                <div class="stat-info">
+                    <h3 id="countTotal">—</h3>
+                    <p>إجمالي الطلبات</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon pending"><i class="fas fa-clock"></i></div>
+                <div class="stat-info">
+                    <h3 id="countPending">—</h3>
+                    <p>قيد المراجعة</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon approved"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-info">
+                    <h3 id="countApproved">—</h3>
+                    <p>تمت الموافقة</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon rejected"><i class="fas fa-times-circle"></i></div>
+                <div class="stat-info">
+                    <h3 id="countRejected">—</h3>
+                    <p>مرفوضة</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="filters-bar">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input id="searchInput" type="text" placeholder="بحث بالاسم أو رقم المعاملة..." oninput="filterTable()">
+            </div>
+            <select class="filter-select" id="statusFilter" onchange="filterTable()">
+                <option value="">كل الحالات</option>
+                <option value="pending">قيد المراجعة</option>
+                <option value="approved">موافق عليه</option>
+                <option value="rejected">مرفوض</option>
+            </select>
+            <select class="filter-select" id="grantFilter" onchange="filterTable()">
+                <option value="">كل أنواع المنح</option>
+                <option value="housing">إسكان</option>
+                <option value="investment">استثمار</option>
+                <option value="small-projects">مشاريع صغيرة</option>
+                <option value="debts">ديون</option>
+                <option value="marriage">زواج</option>
+                <option value="education">تعليم</option>
+                <option value="car">سيارة</option>
+                <option value="needy">محتاج</option>
+                <option value="sickness">مرض</option>
+                <option value="donation">تبرع</option>
+            </select>
+            <span class="results-count" id="resultsCount"></span>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>رقم المعاملة</th>
+                            <th>المتقدم</th>
+                            <th>نوع المنحة</th>
+                            <th>المبلغ (ريال)</th>
+                            <th>الحالة</th>
+                            <th>تاريخ التقديم</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="8">
+                            <div class="table-empty">
+                                <div class="spinner"></div>
+                                <p>جاري تحميل البيانات...</p>
+                            </div>
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+
+    </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ═══════════════ DETAIL MODAL ═══════════════ -->
+<div class="modal-overlay" id="detailModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalTitle">تفاصيل الطلب</h3>
+            <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════
+// CONFIG
+// ══════════════════════════════
+const SUPABASE_URL      = 'https://tdjepjglnyumfdeljhqz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkamVwamdsbnl1bWZkZWxqaHF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MTgzNzYsImV4cCI6MjA5MzA5NDM3Nn0.OUVLxKKjxylaIBR9tGcCPm6g8N5FaCm0gigpNB_Wq3Q';
+const ADMIN_USER = 'admin';
+const ADMIN_PASS = 'alwaleed2026';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ══════════════════════════════
+// STATE
+// ══════════════════════════════
+let allData    = [];
+let filtered   = [];
+let currentPage = 1;
+const PER_PAGE  = 15;
+
+// ══════════════════════════════
+// LOGIN
+// ══════════════════════════════
+function doLogin() {
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value.trim();
+    if (u === ADMIN_USER && p === ADMIN_PASS) {
+        document.getElementById('loginScreen').style.display = 'none';
+        sessionStorage.setItem('adminAuth', '1');
+        loadApplications();
+    } else {
+        document.getElementById('loginError').style.display = 'block';
+    }
+}
+function doLogout() {
+    sessionStorage.removeItem('adminAuth');
+    location.reload();
+}
+document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+// Auto-login if session exists
+if (sessionStorage.getItem('adminAuth') === '1') {
+    document.getElementById('loginScreen').style.display = 'none';
+    loadApplications();
+}
+
+// ══════════════════════════════
+// DATE
+// ══════════════════════════════
+(function() {
+    const d = new Date();
+    document.getElementById('topbarDate').textContent =
+        d.toLocaleDateString('ar-SA', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+})();
+
+// ══════════════════════════════
+// LOAD DATA
+// ══════════════════════════════
+async function loadApplications() {
+    document.getElementById('tableBody').innerHTML =
+        `<tr><td colspan="8"><div class="table-empty"><div class="spinner"></div><p>جاري التحميل...</p></div></td></tr>`;
+
+    const { data, error } = await sb
+        .from('applications')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        document.getElementById('tableBody').innerHTML =
+            `<tr><td colspan="8"><div class="table-empty"><i class="fas fa-exclamation-triangle"></i><p>خطأ في تحميل البيانات: ${error.message}</p></div></td></tr>`;
+        return;
+    }
+
+    allData = data || [];
+    updateStats();
+    filterTable();
+}
+
+// ══════════════════════════════
+// STATS
+// ══════════════════════════════
+function updateStats() {
+    const total    = allData.length;
+    const pending  = allData.filter(r => r.status === 'pending').length;
+    const approved = allData.filter(r => r.status === 'approved').length;
+    const rejected = allData.filter(r => r.status === 'rejected').length;
+
+    document.getElementById('countTotal').textContent    = total;
+    document.getElementById('countPending').textContent  = pending;
+    document.getElementById('countApproved').textContent = approved;
+    document.getElementById('countRejected').textContent = rejected;
+    document.getElementById('pendingBadge').textContent  = pending;
+}
+
+// ══════════════════════════════
+// FILTER & RENDER
+// ══════════════════════════════
+function filterTable() {
+    const search = document.getElementById('searchInput').value.trim().toLowerCase();
+    const status = document.getElementById('statusFilter').value;
+    const grant  = document.getElementById('grantFilter').value;
+
+    filtered = allData.filter(r => {
+        const matchSearch = !search ||
+            (r.full_name || '').toLowerCase().includes(search) ||
+            (r.transaction_id || '').toLowerCase().includes(search) ||
+            (r.phone || '').includes(search);
+        const matchStatus = !status || r.status === status;
+        const matchGrant  = !grant  || r.grant_type === grant;
+        return matchSearch && matchStatus && matchGrant;
+    });
+
+    document.getElementById('resultsCount').textContent =
+        `${filtered.length} نتيجة`;
+
+    currentPage = 1;
+    renderTable();
+    renderPagination();
+}
+
+function renderTable() {
+    const start = (currentPage - 1) * PER_PAGE;
+    const page  = filtered.slice(start, start + PER_PAGE);
+    const tbody = document.getElementById('tableBody');
+
+    if (!page.length) {
+        tbody.innerHTML = `<tr><td colspan="8"><div class="table-empty"><i class="fas fa-inbox"></i><p>لا توجد طلبات</p></div></td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = page.map((r, i) => `
+        <tr>
+            <td><strong>${start + i + 1}</strong></td>
+            <td><span class="tx-id">${r.transaction_id || '—'}</span></td>
+            <td>
+                <div class="applicant-name">${r.full_name || '—'}</div>
+                <div class="applicant-phone">${r.phone || ''}</div>
+            </td>
+            <td>${grantLabel(r.grant_type)}</td>
+            <td><strong>${(r.grant_amount || 0).toLocaleString('ar-SA')}</strong></td>
+            <td>${statusBadge(r.status)}</td>
+            <td>${formatDate(r.created_at)}</td>
+            <td>
+                <div class="actions">
+                    <button class="btn-icon btn-view"    onclick="openDetail('${r.id}')" title="عرض"><i class="fas fa-eye"></i></button>
+                    <button class="btn-icon btn-approve" onclick="changeStatus('${r.id}','approved')" title="موافقة"><i class="fas fa-check"></i></button>
+                    <button class="btn-icon btn-reject"  onclick="changeStatus('${r.id}','rejected')" title="رفض"><i class="fas fa-times"></i></button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderPagination() {
+    const total = Math.ceil(filtered.length / PER_PAGE);
+    const pg    = document.getElementById('pagination');
+    if (total <= 1) { pg.innerHTML = ''; return; }
+
+    let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}><i class="fas fa-chevron-right"></i></button>`;
+    for (let i = 1; i <= total; i++) {
+        if (total > 7 && i > 2 && i < total - 1 && Math.abs(i - currentPage) > 2) {
+            if (i === 3 || i === total - 2) html += `<span style="padding:0 .3rem;color:var(--muted)">…</span>`;
+            continue;
+        }
+        html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    }
+    html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''}><i class="fas fa-chevron-left"></i></button>`;
+    pg.innerHTML = html;
+}
+
+function goPage(n) {
+    const total = Math.ceil(filtered.length / PER_PAGE);
+    if (n < 1 || n > total) return;
+    currentPage = n;
+    renderTable();
+    renderPagination();
+    document.querySelector('.table-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ══════════════════════════════
+// DETAIL MODAL
+// ══════════════════════════════
+function openDetail(id) {
+    const r = allData.find(x => x.id === id);
+    if (!r) return;
+
+    document.getElementById('modalTitle').textContent = `طلب ${r.transaction_id}`;
+
+    const frontImg = r.id_card_front_url
+        ? `<img src="${r.id_card_front_url}" alt="الوجه الأمامي" onclick="window.open('${r.id_card_front_url}','_blank')">`
+        : `<div class="no-img"><i class="fas fa-image"></i> لا توجد صورة</div>`;
+    const backImg  = r.id_card_back_url
+        ? `<img src="${r.id_card_back_url}" alt="الوجه الخلفي" onclick="window.open('${r.id_card_back_url}','_blank')">`
+        : `<div class="no-img"><i class="fas fa-image"></i> لا توجد صورة</div>`;
+
+    document.getElementById('modalBody').innerHTML = `
+        <p class="section-divider">المعلومات الشخصية</p>
+        <div class="detail-grid">
+            <div class="detail-item"><label>الاسم الكامل</label><span>${r.full_name || '—'}</span></div>
+            <div class="detail-item"><label>الدولة</label><span>${r.country || '—'}</span></div>
+            <div class="detail-item"><label>الحالة الاجتماعية</label><span>${r.marital_status || '—'}</span></div>
+            <div class="detail-item"><label>عدد الأطفال</label><span>${r.num_children ?? '—'}</span></div>
+        </div>
+
+        <p class="section-divider">التواصل والمهنة</p>
+        <div class="detail-grid">
+            <div class="detail-item"><label>رقم الهاتف</label><span>${r.phone || '—'}</span></div>
+            <div class="detail-item"><label>البريد الإلكتروني</label><span>${r.email || '—'}</span></div>
+            <div class="detail-item"><label>المهنة</label><span>${r.profession || '—'}</span></div>
+            <div class="detail-item"><label>الدخل الشهري (ريال)</label><span>${(r.monthly_income || 0).toLocaleString('ar-SA')}</span></div>
+        </div>
+
+        <p class="section-divider">تفاصيل المنحة</p>
+        <div class="detail-grid">
+            <div class="detail-item"><label>نوع المنحة</label><span>${grantLabel(r.grant_type)}</span></div>
+            <div class="detail-item"><label>المبلغ المطلوب (ريال)</label><span>${(r.grant_amount || 0).toLocaleString('ar-SA')}</span></div>
+            <div class="detail-item detail-full"><label>وصف الحالة</label>
+                <div class="detail-note">${r.grant_description || '—'}</div>
+            </div>
+        </div>
+
+        <p class="section-divider">المعلومات البنكية</p>
+        <div class="detail-grid">
+            <div class="detail-item"><label>اسم البنك</label><span>${r.bank_name || '—'}</span></div>
+            <div class="detail-item"><label>اسم صاحب الحساب</label><span>${r.account_holder || '—'}</span></div>
+            <div class="detail-item detail-full"><label>رقم الآيبان</label><span style="font-family:monospace;letter-spacing:.05em;">${r.iban || '—'}</span></div>
+        </div>
+
+        <p class="section-divider">صور الهوية</p>
+        <div class="id-images">
+            <div class="id-img-box"><label>الوجه الأمامي</label>${frontImg}</div>
+            <div class="id-img-box"><label>الوجه الخلفي</label>${backImg}</div>
+        </div>
+
+        <p class="section-divider">الحالة والإجراءات</p>
+        <div style="margin-bottom:.5rem">الحالة الحالية: ${statusBadge(r.status)}</div>
+
+        <div class="modal-actions">
+            <button class="action-btn approve" onclick="changeStatus('${r.id}','approved'); closeModal()">
+                <i class="fas fa-check-circle"></i> موافقة على الطلب
+            </button>
+            <button class="action-btn reject" onclick="changeStatus('${r.id}','rejected'); closeModal()">
+                <i class="fas fa-times-circle"></i> رفض الطلب
+            </button>
+            <button class="action-btn whatsapp" onclick="sendWhatsApp('${r.phone}','${r.full_name}','${r.transaction_id}')">
+                <i class="fab fa-whatsapp"></i> إرسال واتس آب
+            </button>
+        </div>
+    `;
+
+    document.getElementById('detailModal').classList.add('open');
+}
+
+function closeModal() {
+    document.getElementById('detailModal').classList.remove('open');
+}
+document.getElementById('detailModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+// ══════════════════════════════
+// STATUS CHANGE
+// ══════════════════════════════
+async function changeStatus(id, newStatus) {
+    const { error } = await sb
+        .from('applications')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+    if (error) { showToast('❌ خطأ: ' + error.message); return; }
+
+    const rec = allData.find(x => x.id === id);
+    if (rec) rec.status = newStatus;
+
+    updateStats();
+    filterTable();
+
+    const labels = { approved: '✅ تمت الموافقة على الطلب', rejected: '❌ تم رفض الطلب' };
+    showToast(labels[newStatus] || 'تم التحديث');
+}
+
+// ══════════════════════════════
+// WHATSAPP
+// ══════════════════════════════
+function sendWhatsApp(phone, name, txId) {
+    if (!phone) { showToast('لا يوجد رقم هاتف'); return; }
+    const clean = phone.replace(/\D/g, '');
+    const msg = encodeURIComponent(
+        `مرحباً ${name}،\n` +
+        `بخصوص طلبكم رقم: ${txId}\n` +
+        `تم مراجعة طلبكم من قِبل مؤسسة الوليد للإنسانية.\n` +
+        `سيتم التواصل معكم قريباً. شكراً لثقتكم.`
+    );
+    window.open(`https://wa.me/${clean}?text=${msg}`, '_blank');
+}
+
+// ══════════════════════════════
+// HELPERS
+// ══════════════════════════════
+function statusBadge(s) {
+    const m = {
+        pending:  ['قيد المراجعة', 'pending'],
+        approved: ['موافق عليه',   'approved'],
+        rejected: ['مرفوض',        'rejected']
+    };
+    const [label, cls] = m[s] || ['غير معروف', 'pending'];
+    return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function grantLabel(t) {
+    const m = {
+        housing: 'إسكان', investment: 'استثمار',
+        'small-projects': 'مشاريع صغيرة', debts: 'ديون',
+        marriage: 'زواج', education: 'تعليم',
+        car: 'سيارة', needy: 'محتاج',
+        sickness: 'مرض', donation: 'تبرع'
+    };
+    return m[t] || (t || '—');
+}
+
+function formatDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('ar-SA', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
+}
+
+function showSection(s) {
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
+
