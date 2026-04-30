@@ -281,29 +281,33 @@
                 <div class="form-group">
                     <label data-en="ID Card - Front" data-ar="بطاقة الهوية - الوجه">بطاقة الهوية - الوجه <span class="required">*</span></label>
                     <div class="file-upload">
-                        <div class="file-upload-area">
-                            <input type="file" id="idCardFront" name="idCardFront" class="file-input" accept=".jpg,.jpeg,.png,.pdf" required>
+                        <!-- input مخفي - يُفتح عبر label أدناه -->
+                        <input type="file" id="idCardFront" name="idCardFront" class="file-input" accept=".jpg,.jpeg,.png,.pdf">
+                        <!-- label مربوط بـ input - يعمل على كل الأجهزة بدون JS -->
+                        <label for="idCardFront" class="file-upload-area" id="idCardFrontArea">
                             <i class="fas fa-cloud-upload-alt"></i>
-                            <p data-en="Drag and drop your file here or click to browse" data-ar="اسحب الملف هنا أو انقر للاستعراض">اسحب الملف هنا أو انقر للاستعراض</p>
+                            <p data-en="Tap to choose a photo" data-ar="اضغط لاختيار صورة">اضغط لاختيار صورة</p>
                             <small data-en="JPG, PNG, PDF - Max 5MB" data-ar="JPG، PNG، PDF - الحد الأقصى 5 ميجابايت">JPG، PNG، PDF - الحد الأقصى 5 ميجابايت</small>
-                        </div>
+                        </label>
                         <div class="file-preview" id="idCardFrontPreview"></div>
                     </div>
-                    <span class="error-message"></span>
+                    <span class="error-message" id="idCardFrontError"></span>
                 </div>
 
                 <div class="form-group">
                     <label data-en="ID Card - Back" data-ar="بطاقة الهوية - الخلف">بطاقة الهوية - الخلف <span class="required">*</span></label>
                     <div class="file-upload">
-                        <div class="file-upload-area">
-                            <input type="file" id="idCardBack" name="idCardBack" class="file-input" accept=".jpg,.jpeg,.png,.pdf" required>
+                        <!-- input مخفي - يُفتح عبر label أدناه -->
+                        <input type="file" id="idCardBack" name="idCardBack" class="file-input" accept=".jpg,.jpeg,.png,.pdf">
+                        <!-- label مربوط بـ input - يعمل على كل الأجهزة بدون JS -->
+                        <label for="idCardBack" class="file-upload-area" id="idCardBackArea">
                             <i class="fas fa-cloud-upload-alt"></i>
-                            <p data-en="Drag and drop your file here or click to browse" data-ar="اسحب الملف هنا أو انقر للاستعراض">اسحب الملف هنا أو انقر للاستعراض</p>
+                            <p data-en="Tap to choose a photo" data-ar="اضغط لاختيار صورة">اضغط لاختيار صورة</p>
                             <small data-en="JPG, PNG, PDF - Max 5MB" data-ar="JPG، PNG، PDF - الحد الأقصى 5 ميجابايت">JPG، PNG، PDF - الحد الأقصى 5 ميجابايت</small>
-                        </div>
+                        </label>
                         <div class="file-preview" id="idCardBackPreview"></div>
                     </div>
-                    <span class="error-message"></span>
+                    <span class="error-message" id="idCardBackError"></span>
                 </div>
 
                 <div class="form-group checkbox">
@@ -351,4 +355,4 @@
     
     <script src="js/portal.js"></script>
 </body>
-</html>
+  </html>
